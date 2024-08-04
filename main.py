@@ -3,7 +3,6 @@ import os
 import discord
 import controller
 from dotenv import load_dotenv
-from dataset_tools.retrieve_msg_history import retrieve
 
 load_dotenv()
 TOKEN = os.getenv('TEKTIM_TOKEN')
@@ -50,17 +49,6 @@ async def on_message(message):
     # admin: exception handling example
     elif (message.content.strip() == 'raise-exception' and message.author.strip() == 'tigm'):
         raise discord.DiscordException
-    
-    # admin: retrieve messages for dataset
-    elif (message.content.strip() == 'retrieve-content' and message.author.strip() == 'tigm'):
-        # bot response
-        response = 'Affirmative: retrieving message history of this channel'
-        await message.channel.send(response)
-
-        # retrieve all messages: need to call retrieve_msg_history.py for this
-        channel = 'temp'
-        server = 'temp'
-        retrieve(channel, server)
     
     # if some random message is seen respond to it here
     elif not message.attachments and not lock:

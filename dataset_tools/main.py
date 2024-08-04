@@ -128,7 +128,7 @@ def retrieve_image():
     files = os.listdir(directory)
     #print(len(files))
     if len(files) == 0:
-        file = "out_of_images.png"
+        file = "dataset_tools\\out_of_images.png"
         global lock
         lock = True
 
