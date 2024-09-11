@@ -74,7 +74,7 @@ def generate_react_on_media(attachment, model):
 
         print("Prediction: ",prediction)
         if prediction == "funny":
-            rng = random.randrange(1, 100)
+            rng = random.randrange(1, 1000)
             if rng == 1:
                 reaction = "<:golden_catchest:1268418504990654546>"
             else:
@@ -88,7 +88,7 @@ def generate_react_on_media(attachment, model):
     else:
         rng = random.randrange(1, 10)
         if rng == 1:
-            rng2 = random.rangrange(1, 100)
+            rng2 = random.rangrange(1, 1000)
             if rng2 == 1:
                 reaction = "<:golden_catchest:1268418504990654546>"
             else:

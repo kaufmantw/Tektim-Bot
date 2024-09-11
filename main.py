@@ -51,8 +51,7 @@ async def on_message(message):
     elif (message.content.strip() == 'raise-exception' and message.author.strip() == 'tigm'):
         raise discord.DiscordException
     
-    # if tektim is pinged, respond to the message
-    if message.content != "" and client.user in message.mentions:
+    if isinstance(message.channel, discord.DMChannel) or (message.content != "" and client.user in message.mentions):
         print('\nAuthor: ', message.author)
         print('Message: ', message.content)
 
