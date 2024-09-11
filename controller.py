@@ -3,14 +3,16 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import re
-import joblib
 import requests
 import shutil
 import os
+import numpy as np
 
-#image prediction and processing imports
-from sklearn.svm import SVC
+#image prediction with resnet50 model
+import tensorflow as tf
+from tensorflow.keras.preprocessing import image
 from dataset_tools.img_cleaner import create_img_data
+import joblib
 
 def generate_response(msg):
     '''
@@ -53,9 +55,9 @@ def generate_react_on_media(attachment):
         #create image data
         path = "C:\\Users\\timka\\Documents\\code\\python\\Tektim-Bot\\data\\images\\live_input\\" + attachment.filename 
         x_test = create_img_data(path)
-        x_test = x_test.reshape(1, -1)
+
         #grab the model
-        model = joblib.load('data/models/256img_model.joblib')
+        model = tf.keras.models.load_model('data/models/raw/resnet.keras')
 
         #predict using the model
         try:
@@ -64,7 +66,22 @@ def generate_react_on_media(attachment):
             print(f"Error caught: {e}")
 
         # assign reaction off prediction
+        class_names = joblib.load('data\models\class_names.pkl')
+        prediction = class_names[np.argmax(prediction)]
+        
         print("Prediction: ",prediction)
+        if prediction == "funny":
+            rng2 = random.randrange(1, 100)
+            if rng == 1:
+                reaction = "<:golden_catchest:1268418504990654546>"
+            else:
+                reaction = "<:catchest:1267111295145087057>"
+        elif prediction == "cringe":
+            reaction = "<:erm:1267111273275854908>"
+        else:
+            reaction = "<:clueless:1267111395498004532>"
+
+        '''
         match prediction:
             case "funny":
                 rng2 = random.randrange(1, 100)
@@ -74,10 +91,22 @@ def generate_react_on_media(attachment):
                     reaction = "<:catchest:1267111295145087057>"
             case "cringe":
                 reaction = "<:erm:1267111273275854908>"
-
+        '''
     # if the attachment is not an image, do default reacting
     else:
         rng = random.randrange(1, 10)
+        if rng == 1:
+            rng2 = random.rangrange(1, 100)
+            if rng2 == 1:
+                reaction = "<:golden_catchest:1268418504990654546>"
+            else:
+                reaction = "<:catchest:1267111295145087057>"
+        elif rng == 2:
+            reaction = "<:erm:1267111273275854908>"
+        else:
+            reaction = "<:clueless:1267111395498004532>"
+
+        '''
         match rng:
             case 1:
                 rng2 = random.randrange(1, 100)
@@ -87,7 +116,7 @@ def generate_react_on_media(attachment):
                     reaction = "<:catchest:1267111295145087057>"
             case 2:
                 reaction = "<:erm:1267111273275854908>"
-
+        '''
     # when prediction is done, delete the image from live_input
     os.remove(path)
 

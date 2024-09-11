@@ -1,15 +1,9 @@
-import os
-
-from skimage.io import imread
-from skimage.transform import resize
-from skimage.color import rgb2gray
-
+from tensorflow.keras.preprocessing import image
+import numpy as np
 
 # format image to be 256x256 b/w
 def create_img_data(filepath):
-    formatted_image = ''
-    img = imread(filepath)[:,:,:3]
-    formatted_image = resize(img, (256, 256))
-    formatted_image = rgb2gray(formatted_image) # this requries only 3 channels.
-    formatted_image = formatted_image.flatten()
-    return formatted_image
+    img = image.load_img(filepath, target_size=(256, 256))
+    img_arr = image.img_to_array(img)
+    img_arr = np.expand_dims(img_arr, axis=0)
+    return img_arr
