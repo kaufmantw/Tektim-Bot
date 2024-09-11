@@ -3,13 +3,11 @@ import os
 import discord
 import controller
 from dotenv import load_dotenv
+import tensorflow as tf
 
 load_dotenv()
 TOKEN = os.getenv('TEKTIM_TOKEN')
 GUILD = os.getenv('DISCORD_SERVER')
-
-# lock for interactions: turn on when interacting with another server please :)
-lock = False
 
 #print(TOKEN)
 intents=discord.Intents.default()
@@ -17,6 +15,9 @@ intents.members = True
 intents.messages = True
 intents.message_content = True
 client = discord.Client(intents=intents)
+
+#grab the model
+img_model = tf.keras.models.load_model('data/models/raw/resnet.keras')
 
 # event handling
 @client.event
@@ -43,23 +44,29 @@ async def on_message(message):
         return
 
     # respond with emoji at this cringe behavior
-    if(message.content.lower() == 'owo' or message.content.lower()=='uwu' and not lock):
+    if(message.content.lower() == 'owo' or message.content.lower()=='uwu'):
         await message.channel.send('<:erm:1267111273275854908>')
 
     # admin: exception handling example
     elif (message.content.strip() == 'raise-exception' and message.author.strip() == 'tigm'):
         raise discord.DiscordException
     
-    # if some random message is seen respond to it here
-    elif not message.attachments and not lock:
+    # if tektim is pinged, respond to the message
+    if message.content != "" and client.user in message.mentions:
         print('\nAuthor: ', message.author)
         print('Message: ', message.content)
-        response = controller.generate_response(message.content)
+
+        # filter the mention out of the original message
+        mention_format = f"<@{client.user.id}>"
+        msg = message.content.replace(mention_format, "")
+
+        # create and return a response
+        response = controller.generate_response(msg)
         await message.channel.send(response)
 
     # if an attachment is seen, send the attachments to 
-    elif not lock:
-        emoji = controller.generate_react_on_media(message.attachments)
+    if message.attachments:
+        emoji = controller.generate_react_on_media(message.attachments, img_model)
         if emoji != '':
             await message.add_reaction(emoji)
 

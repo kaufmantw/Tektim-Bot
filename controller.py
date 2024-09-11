@@ -21,23 +21,29 @@ def generate_response(msg):
         2. When a message with >=3 words is sent, send x on my y till she z
     '''
     msg_options = ['nyuck',
-                   '?',
-                   'shut up']
+                   'shut up',
+                   'hello habibi']
     
     stop_words = set(stopwords.words('english'))
     msg = re.sub(r'[^\w\s?!]', '', msg)
     msg = word_tokenize(msg) #this is... slow?
     filtered_sentence = [word for word in msg if word.lower() not in stop_words]
 
+    # if the message is long enough, return this premade sentence
     if len(filtered_sentence) >= 3:
         random_words = random.sample(filtered_sentence, 3)
         response = "she " + random_words[0] + " on my " + random_words[1] + " till i " + random_words[2]
+
+    # if there is no content (message is just a ping) return ?
+    elif len(msg) == 0:
+        response = "?"
+    
+    # otherwise, choose a random message choice
     else:
         response = random.choice(msg_options)
     return response
 
-def generate_react_on_media(attachment):
-    #If an image is sent, for now respond with an emote. 10 10 80 split
+def generate_react_on_media(attachment, model):
     # catchest:        <:catchest:1267111295145087057>
     # erm:             <:erm:1267111273275854908>
     # golden catchest: <:golden_catchest:1268418504990654546>
@@ -56,9 +62,6 @@ def generate_react_on_media(attachment):
         path = "C:\\Users\\timka\\Documents\\code\\python\\Tektim-Bot\\data\\images\\live_input\\" + attachment.filename 
         x_test = create_img_data(path)
 
-        #grab the model
-        model = tf.keras.models.load_model('data/models/raw/resnet.keras')
-
         #predict using the model
         try:
             prediction = model.predict(x_test)
@@ -68,10 +71,10 @@ def generate_react_on_media(attachment):
         # assign reaction off prediction
         class_names = joblib.load('data\models\class_names.pkl')
         prediction = class_names[np.argmax(prediction)]
-        
+
         print("Prediction: ",prediction)
         if prediction == "funny":
-            rng2 = random.randrange(1, 100)
+            rng = random.randrange(1, 100)
             if rng == 1:
                 reaction = "<:golden_catchest:1268418504990654546>"
             else:
@@ -81,17 +84,6 @@ def generate_react_on_media(attachment):
         else:
             reaction = "<:clueless:1267111395498004532>"
 
-        '''
-        match prediction:
-            case "funny":
-                rng2 = random.randrange(1, 100)
-                if rng2 == 1:
-                    reaction = "<:golden_catchest:1268418504990654546>"
-                else:
-                    reaction = "<:catchest:1267111295145087057>"
-            case "cringe":
-                reaction = "<:erm:1267111273275854908>"
-        '''
     # if the attachment is not an image, do default reacting
     else:
         rng = random.randrange(1, 10)
@@ -105,18 +97,7 @@ def generate_react_on_media(attachment):
             reaction = "<:erm:1267111273275854908>"
         else:
             reaction = "<:clueless:1267111395498004532>"
-
-        '''
-        match rng:
-            case 1:
-                rng2 = random.randrange(1, 100)
-                if rng2 == 1:
-                    reaction = "<:golden_catchest:1268418504990654546>"
-                else:
-                    reaction = "<:catchest:1267111295145087057>"
-            case 2:
-                reaction = "<:erm:1267111273275854908>"
-        '''
+            
     # when prediction is done, delete the image from live_input
     os.remove(path)
 
