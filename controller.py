@@ -3,14 +3,16 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import re
-import joblib
 import requests
 import shutil
 import os
+import numpy as np
 
-#image prediction and processing imports
-from sklearn.svm import SVC
+#image prediction with resnet50 model
+import tensorflow as tf
+from tensorflow.keras.preprocessing import image
 from dataset_tools.img_cleaner import create_img_data
+import joblib
 
 def generate_response(msg):
     '''
@@ -19,23 +21,29 @@ def generate_response(msg):
         2. When a message with >=3 words is sent, send x on my y till she z
     '''
     msg_options = ['nyuck',
-                   '?',
-                   'shut up']
+                   'shut up',
+                   'hello habibi']
     
     stop_words = set(stopwords.words('english'))
     msg = re.sub(r'[^\w\s?!]', '', msg)
     msg = word_tokenize(msg) #this is... slow?
     filtered_sentence = [word for word in msg if word.lower() not in stop_words]
 
+    # if the message is long enough, return this premade sentence
     if len(filtered_sentence) >= 3:
         random_words = random.sample(filtered_sentence, 3)
         response = "she " + random_words[0] + " on my " + random_words[1] + " till i " + random_words[2]
+
+    # if there is no content (message is just a ping) return ?
+    elif len(msg) == 0:
+        response = "?"
+    
+    # otherwise, choose a random message choice
     else:
         response = random.choice(msg_options)
     return response
 
-def generate_react_on_media(attachment):
-    #If an image is sent, for now respond with an emote. 10 10 80 split
+def generate_react_on_media(attachment, model):
     # catchest:        <:catchest:1267111295145087057>
     # erm:             <:erm:1267111273275854908>
     # golden catchest: <:golden_catchest:1268418504990654546>
@@ -53,9 +61,6 @@ def generate_react_on_media(attachment):
         #create image data
         path = "C:\\Users\\timka\\Documents\\code\\python\\Tektim-Bot\\data\\images\\live_input\\" + attachment.filename 
         x_test = create_img_data(path)
-        x_test = x_test.reshape(1, -1)
-        #grab the model
-        model = joblib.load('data/models/256img_model.joblib')
 
         #predict using the model
         try:
@@ -64,34 +69,67 @@ def generate_react_on_media(attachment):
             print(f"Error caught: {e}")
 
         # assign reaction off prediction
+        class_names = joblib.load('data\models\pred_names\class_names.pkl')
+        prediction = class_names[np.argmax(prediction)]
+
         print("Prediction: ",prediction)
-        match prediction:
-            case "funny":
-                rng2 = random.randrange(1, 100)
-                if rng2 == 1:
-                    reaction = "<:golden_catchest:1268418504990654546>"
-                else:
-                    reaction = "<:catchest:1267111295145087057>"
-            case "cringe":
-                reaction = "<:erm:1267111273275854908>"
+        if prediction == "funny":
+            rng = random.randrange(1, 1000)
+            if rng == 1:
+                reaction = "<:golden_catchest:1268418504990654546>"
+            else:
+                reaction = "<:catchest:1267111295145087057>"
+        elif prediction == "cringe":
+            reaction = "<:erm:1267111273275854908>"
+        else:
+            reaction = "<:clueless:1267111395498004532>"
 
     # if the attachment is not an image, do default reacting
     else:
         rng = random.randrange(1, 10)
-        match rng:
-            case 1:
-                rng2 = random.randrange(1, 100)
-                if rng2 == 1:
-                    reaction = "<:golden_catchest:1268418504990654546>"
-                else:
-                    reaction = "<:catchest:1267111295145087057>"
-            case 2:
-                reaction = "<:erm:1267111273275854908>"
-
+        if rng == 1:
+            rng2 = random.rangrange(1, 1000)
+            if rng2 == 1:
+                reaction = "<:golden_catchest:1268418504990654546>"
+            else:
+                reaction = "<:catchest:1267111295145087057>"
+        elif rng == 2:
+            reaction = "<:erm:1267111273275854908>"
+        else:
+            reaction = "<:clueless:1267111395498004532>"
+            
     # when prediction is done, delete the image from live_input
     os.remove(path)
 
     return reaction
+
+def check_dogness(avatar, model):
+    pic_url = avatar.url
+    file_name = avatar.key
+
+    download_image(pic_url, file_name)
+
+    path = "C:\\Users\\timka\\Documents\\code\\python\\Tektim-Bot\\data\\images\\live_input\\" + file_name
+    x_test = create_img_data(path)
+
+    #predict using the model
+    try:
+        prediction = model.predict(x_test)
+    except Exception as e:
+        print(f"Error caught: {e}")
+
+    # assign reaction off prediction
+    class_names = joblib.load('data/models/pred_names/dogcat_names.pkl')
+    prediction = class_names[np.argmax(prediction)]
+
+    print("Prediction: ",prediction)
+    if prediction == 'cats':
+        response = 'You ain\'t a dog lil bro'
+    else:
+        response = 'big dawg'
+    # remove when done
+    os.remove(path)
+    return response
 
 def download_image(url, filename):
     response = requests.get(url)
@@ -108,5 +146,16 @@ def download_image(url, filename):
         print(f'Failed to download {filename}')
 
 
-nltk.download('stopwords')
-nltk.download('punkt')
+try:
+    nltk.data.find('corpora/stopwords')  # Check if 'stopwords' is available
+    print("'stopwords' is already downloaded.")
+except LookupError:
+    nltk.download('stopwords')
+    print("'stopwords' has been downloaded.")
+
+try:
+    nltk.data.find('tokenizers/punkt')  # Check if 'punkt' is available
+    print("'punkt' is already downloaded.")
+except LookupError:
+    nltk.download('punkt')
+    print("'punkt' has been downloaded.")

@@ -1,2 +1,3 @@
 images/
-!/processed/*
+data/models/raw
+err.log
