@@ -69,7 +69,7 @@ def generate_react_on_media(attachment, model):
             print(f"Error caught: {e}")
 
         # assign reaction off prediction
-        class_names = joblib.load('data\models\class_names.pkl')
+        class_names = joblib.load('data\models\pred_names\class_names.pkl')
         prediction = class_names[np.argmax(prediction)]
 
         print("Prediction: ",prediction)
@@ -103,6 +103,34 @@ def generate_react_on_media(attachment, model):
 
     return reaction
 
+def check_dogness(avatar, model):
+    pic_url = avatar.url
+    file_name = avatar.key
+
+    download_image(pic_url, file_name)
+
+    path = "C:\\Users\\timka\\Documents\\code\\python\\Tektim-Bot\\data\\images\\live_input\\" + file_name
+    x_test = create_img_data(path)
+
+    #predict using the model
+    try:
+        prediction = model.predict(x_test)
+    except Exception as e:
+        print(f"Error caught: {e}")
+
+    # assign reaction off prediction
+    class_names = joblib.load('data/models/pred_names/dogcat_names.pkl')
+    prediction = class_names[np.argmax(prediction)]
+
+    print("Prediction: ",prediction)
+    if prediction == 'cats':
+        response = 'You ain\'t a dog lil bro'
+    else:
+        response = 'big dawg'
+    # remove when done
+    os.remove(path)
+    return response
+
 def download_image(url, filename):
     response = requests.get(url)
     if response.status_code == 200:
@@ -118,5 +146,16 @@ def download_image(url, filename):
         print(f'Failed to download {filename}')
 
 
-nltk.download('stopwords')
-nltk.download('punkt')
+try:
+    nltk.data.find('corpora/stopwords')  # Check if 'stopwords' is available
+    print("'stopwords' is already downloaded.")
+except LookupError:
+    nltk.download('stopwords')
+    print("'stopwords' has been downloaded.")
+
+try:
+    nltk.data.find('tokenizers/punkt')  # Check if 'punkt' is available
+    print("'punkt' is already downloaded.")
+except LookupError:
+    nltk.download('punkt')
+    print("'punkt' has been downloaded.")
