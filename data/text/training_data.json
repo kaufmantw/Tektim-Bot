@@ -1,0 +1,14 @@
+[
+    {
+        "input":"hello",
+        "output":"hi habibi"
+    },
+    {
+        "input":"hello",
+        "output":"hihi"
+    },
+    {
+        "input":"hi",
+        "output":"whats good gang"
+    }
+]

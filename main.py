@@ -45,7 +45,10 @@ async def on_member_join(member):
 # this section should be used for natural bot interaction
 @bot.event
 async def on_message(message):
-    await bot.process_commands(message)
+    if message.content.startswith(bot.command_prefix):
+        # Only process commands, don't trigger the custom on_message
+        await bot.process_commands(message)
+        return
 
     # ignore message sent by itself
     if message.author == bot.user:
